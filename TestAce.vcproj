@@ -182,6 +182,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="dtrace"
+			>
+			<File
+				RelativePath=".\ace_lock.d"
+				>
+			</File>
+			<File
+				RelativePath=".\capture_ace.d"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\main.cpp"
 			>
