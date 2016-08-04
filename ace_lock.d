@@ -15,6 +15,12 @@ lockstat:::
 }
 
 
+proc:::
+{
+	@procfuncs[probefunc, execname] = count();
+}
+
+
 proc:::fault
 /execname == "AceLock"/
 {
@@ -24,9 +30,15 @@ proc:::fault
 }
 
 
-pid$1::*Mutex*:entry,
-pid$1::*lock*:entry,
+proc:::exit
+/execname == "AceLock"/
+{
+	exit(0);
+}
+
+
 pid$1::*pthread*:entry,
+pid$1::*lock*:entry,
 pid$1::*mutex*:entry,
 pid$1::*ACE_Thread_Mutex*:entry,
 pid$1::*ACE_Task_Base*:entry,
@@ -38,9 +50,9 @@ pid$1::*ACE_Thread_Timer_Queue_Adapter*:entry
 
 END
 {
+	printa( "%20s  %-20s\n", @procfuncs );
 	printa( @mylock );
-	printa( @functions );
+	printa( " %s\n", @functions );
 	system( "prun %d", $1 );
 	system( "rm -f /u01/transactive/core_files/*AceLock*" );
 }
-
