@@ -6,15 +6,11 @@
 #include "ace/Timer_Heap.h"
 #include "ace/Timer_Queue.h"
 #include "ace/Timer_Queue_Adapters.h"
-#include "core/timers/src/SingletonTimerUtil.h"
 #include "ace/OS.h"
-#include "core/utilities/src/DebugUtil.h"
-#include "core/threads/src/Thread.h"
 #include <cmath>
 #include <ctime>
+#include <map>
 #include <fstream>
-
-using namespace TA_Base_Core;
 
 
 std::string Logger_constructMessage( const char* fmt, va_list& args )
@@ -84,10 +80,7 @@ public:
         do
         {
             m_activeQueue.deactivate();
-            m_activeQueue.wait();
-            m_activeQueue.close();
-            TA_Base_Core::Thread::sleep( 100 );
-        } 
+        }
         while ( 0 < m_activeQueue.thr_count() );
     }
 
@@ -95,13 +88,13 @@ private:
 
     struct TimerItem
     {
-        ITimeoutCallback * user;
+        void * user;
         bool singleShot;
         long timerId;
         void* userData;
     };
 
-    typedef std::multimap<ITimeoutCallback*, long>          TimerMap;
+    typedef std::multimap<void*, long>                      TimerMap;
     typedef ACE_Thread_Timer_Queue_Adapter<ACE_Timer_Heap>  ActiveQueue;
     ActiveQueue                                             m_activeQueue;
     //TA_Base_Core::ReEntrantThreadLockable                 m_mapLock;
@@ -116,14 +109,6 @@ int main( int argc, char* argv[] )
     {   	
         ACE::init();
 
-        std::cout << "size of ACE_Event_Handler = " << sizeof(ACE_Event_Handler) << std::endl;
-        std::cout << "size of TimerUtil = " << sizeof(TA_Base_Core::TimerUtil) << std::endl;
-        std::cout << "size of My_ACE_Event_Handler = " << sizeof(My_ACE_Event_Handler) << std::endl;
-        std::cout << "size of MyTimerUtil = " << sizeof(MyTimerUtil) << std::endl;
-        std::cout << "size of NonReEntrantThreadLockable = " << sizeof(TA_Base_Core::NonReEntrantThreadLockable) << std::endl;
-        std::cout << "size of MyNonReEntrantThreadLockable = " << sizeof(MyNonReEntrantThreadLockable) << std::endl;
-
-
         if ( 1 < argc )
         {
             if ( argv[1] == std::string("cmd-log") )
@@ -131,7 +116,7 @@ int main( int argc, char* argv[] )
                 std::cout << "string from command line" << std::endl;
                 for ( int i = 2; i < argc; ++i )
                 {
-                    LOG1( SourceInfo, TA_Base_Core::DebugUtil::DebugInfo, "%s", argv[i]);
+                    DebugUtil_logGeneric( "%s", argv[i] );
                 }
             }
             else if ( argv[1] == std::string( "mylog" ) )
@@ -139,13 +124,6 @@ int main( int argc, char* argv[] )
                 std::cout << "DebugUtil_logGeneric" << std::endl;
                 DebugUtil_logGeneric( "%s",
                     "\n"
-                    "\t**********************************************************************************************************************\n"
-                    "\t*                                                   START OF FILE                                                    *\n" 
-                    "\t**********************************************************************************************************************" );
-            }
-            else if ( argv[1] == std::string( "log" ) )
-            {
-                LOG0( SourceInfo, TA_Base_Core::DebugUtil::DebugInfo, "\n"
                     "\t**********************************************************************************************************************\n"
                     "\t*                                                   START OF FILE                                                    *\n" 
                     "\t**********************************************************************************************************************" );
@@ -177,21 +155,6 @@ int main( int argc, char* argv[] )
                     MyTimerUtil test;
                 }
             }
-            else if ( argv[2] == std::string( "timer" ) )
-            {
-                std::cout << "TimerUtil" << std::endl;
-                if ( argv[3] == std::string( "new" ) )
-                {
-                    std::cout << "new" << std::endl;
-                    TA_Base_Core::TimerUtil* test = new TA_Base_Core::TimerUtil;
-                    delete test;
-                }
-                else
-                {
-                    std::cout << "stack" << std::endl;
-                    TA_Base_Core::TimerUtil test;
-                }
-            }
             else if ( argv[2] == std::string( "ace" ) )
             {
                 std::cout << "ACE_Thread_Timer_Queue_Adapter" << std::endl;
@@ -204,6 +167,7 @@ int main( int argc, char* argv[] )
                     queue->activate();
                     queue->deactivate();
                     queue->thr_count();
+                    delete queue;
                 }
                 else
                 {
@@ -216,12 +180,7 @@ int main( int argc, char* argv[] )
                 }
             }
         }
-        else
-        {
-            std::cout << "SingletonTimerUtil" << std::endl;
-            TA_Base_Core::SingletonTimerUtil::getInstance();
-            TA_Base_Core::SingletonTimerUtil::removeInstance();
-        }
+
         std::cout << "END" << std::endl;
         std::cout << "hello, world" << std::endl;
 
